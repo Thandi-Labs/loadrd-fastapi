@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 from models import Offers, OfferCategory
-from database import SessionLocal
+from .db import db_dependency
 
 from typing import Annotated
 
@@ -15,23 +15,12 @@ router = APIRouter(
 )
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
 class OfferRequest(BaseModel):
     offer_name: str = Field(min_length=5, max_length=100)
     ussd: str = Field(min_length=3, max_length=100)
     amount: int = Field(gt=0, lt=10_000)
     active: bool
     category: OfferCategory
-
-
-db_dependency = Annotated[Session, Depends(get_db)]
 
 
 @router.get('/', status_code=status.HTTP_200_OK)
