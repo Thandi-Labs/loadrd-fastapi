@@ -4,6 +4,8 @@ from pydantic import BaseModel, Field
 from models import Offers, OfferCategory
 from .db import db_dependency
 
+from .users import get_current_user
+
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status, Path
@@ -13,6 +15,8 @@ router = APIRouter(
     prefix="/offers",
     tags=["Offers"]
 )
+
+user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 class OfferRequest(BaseModel):
@@ -24,13 +28,22 @@ class OfferRequest(BaseModel):
 
 
 @router.get('/', status_code=status.HTTP_200_OK)
-async def get_all_offers(db: db_dependency):
-    return db.query(Offers).all()
+async def get_all_offers(user: user_dependency, db: db_dependency):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication failed")
+    return db.query(Offers).filter(Offers.user_id == user.get('id')).all()
 
 
 @router.get("/offer/{offer_id}", status_code=status.HTTP_200_OK)
-async def get_offer_by_id(db: db_dependency, offer_id: int = Path(gt=0)):
-    offer = db.query(Offers).filter(Offers.id == offer_id).first()
+async def get_offer_by_id(user: user_dependency, db: db_dependency, offer_id: int = Path(gt=0)):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication failed")
+
+    offer = db.query(Offers).filter(Offers.id == offer_id).filter(
+        Offers.user_id == user.get('id')).first()
+
     if offer is not None:
         return offer
     raise HTTPException(
@@ -40,17 +53,26 @@ async def get_offer_by_id(db: db_dependency, offer_id: int = Path(gt=0)):
 
 
 @router.post("/create", status_code=status.HTTP_201_CREATED)
-async def create_offer(db: db_dependency, offer_request: OfferRequest):
-    offer_model = Offers(**offer_request.model_dump())
+async def create_offer(user: user_dependency, db: db_dependency, offer_request: OfferRequest):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication failed")
+
+    offer_model = Offers(**offer_request.model_dump(), user_id=user.get('id'))
 
     db.add(offer_model)
     db.commit()
 
 
 @router.put('/update/{offer_id}', status_code=status.HTTP_204_NO_CONTENT)
-async def update_todo(db: db_dependency, offer_id: int,
+async def update_todo(user: user_dependency, db: db_dependency, offer_id: int,
                       offer_request: OfferRequest):
-    offer_model = db.query(Offers).filter(Offers.id == offer_id).first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication failed")
+
+    offer_model = db.query(Offers).filter(Offers.id == offer_id).filter(
+        Offers.user_id == user.get('id')).first()
 
     if offer_model is None:
         raise HTTPException(
@@ -67,8 +89,13 @@ async def update_todo(db: db_dependency, offer_id: int,
 
 
 @router.delete('/delete/{offer_id}', status_code=status.HTTP_204_NO_CONTENT)
-async def delete_offer(db: db_dependency, offer_id: int = Path(gt=0)):
-    offer_model = db.query(Offers).filter(Offers.id == offer_id).first()
+async def delete_offer(user: user_dependency, db: db_dependency, offer_id: int = Path(gt=0)):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication failed")
+
+    offer_model = db.query(Offers).filter(Offers.id == offer_id).filter(
+        Offers.user_id == user.get('id')).first()
 
     if offer_model is None:
         raise HTTPException(
