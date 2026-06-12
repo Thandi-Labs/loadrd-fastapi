@@ -1,7 +1,14 @@
+
 from fastapi import FastAPI
+
+import models
+from database import engine
 from routers import users, offers
 
-app = FastAPI(title="My Awesome API")
+
+app = FastAPI(title="Loadrd API documentation")
+
+models.Base.metadata.create_all(bind=engine)
 
 
 @app.get("/health", tags=["System"])
