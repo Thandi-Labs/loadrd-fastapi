@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from models import Offers, OfferCategory
 from .db import db_dependency
 
-from .users import get_current_user, RoleTypes
+from .users import get_current_user, RoleTypes, user_dependency
 
 from typing import Annotated
 
@@ -15,8 +15,6 @@ router = APIRouter(
     prefix="/admin",
     tags=["Administrator"]
 )
-
-user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 @router.get('/offers', status_code=status.HTTP_200_OK)

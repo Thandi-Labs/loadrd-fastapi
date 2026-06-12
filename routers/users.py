@@ -22,6 +22,7 @@ router = APIRouter(
     tags=["Authentication"]
 )
 
+
 bcrypt_content = CryptContext(schemes=['bcrypt'], deprecated='auto')
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 
@@ -37,9 +38,27 @@ class CreateUserRequest(BaseModel):
     role: RoleTypes
 
 
+class UserResponse(BaseModel):
+    email: str
+    username: str
+    first_name: str
+    last_name: str
+    is_active: bool
+    is_subscribed: bool
+    role: RoleTypes
+
+    class Config:
+        from_attributes = True
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
+class PasswordChange(BaseModel):
+    old_password: str
+    new_password: str
 
 
 def authenticate_user(username: str, password: str, user: CreateUserRequest):
@@ -51,7 +70,6 @@ def authenticate_user(username: str, password: str, user: CreateUserRequest):
 
 
 def create_access_token(username: str, user_id: str, role: str, expires_delta: timedelta):
-    print(username, user_id, expires_delta)
     encode = {'sub': username, 'id': user_id, 'role': role}
     expires = datetime.now(timezone.utc) + expires_delta
 
@@ -75,6 +93,9 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
     except:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail='could not validate user')
+
+
+user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 @router.post("/create-user", status_code=status.HTTP_201_CREATED)
@@ -129,3 +150,40 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
     token = create_access_token(
         user.username, user.id, user.role, timedelta(minutes=20))
     return {'access_token': token, 'token_type': 'bearer'}
+
+
+@router.get('/get-user', status_code=status.HTTP_200_OK)
+async def get_user(user: user_dependency, db: db_dependency):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication failed")
+
+    user_model = db.query(Users).filter(Users.id == user.get('id')).first()
+
+    if user_model is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='User not found')
+
+    return UserResponse.model_validate(user_model)
+
+
+@router.post('/change-password', status_code=status.HTTP_200_OK)
+async def change_password(user: user_dependency, db: db_dependency, passwords: PasswordChange):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication failed")
+
+    user_model = db.query(Users).filter(Users.id == user.get('id')).first()
+
+    if user_model is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='User not found')
+
+    if not bcrypt_content.verify(passwords.old_password, user_model.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail='User not found')
+
+    user_model.hashed_password = bcrypt_content.hash(passwords.new_password)
+
+    db.add(user_model)
+    db.commit()
