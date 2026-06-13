@@ -13,9 +13,10 @@ from passlib.context import CryptContext
 
 from jose import jwt
 
+from config import settings
 
-SECRET_KEY = 'd10e488108e625064e04094c30fd643a5750b979eb26554074cca78d50b9d12b'
-ALGORITHM = 'HS256'
+SECRET_KEY = settings.secret_key
+ALGORITHM = settings.algorithm
 
 router = APIRouter(
     prefix="/auth",
@@ -148,7 +149,7 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
             status_code=status.HTTP_401_UNAUTHORIZED, detail='could not validate user')
 
     token = create_access_token(
-        user.username, user.id, user.role, timedelta(minutes=20))
+        user.username, user.id, user.role, timedelta(minutes=settings.access_token_expire_minutes))
     return {'access_token': token, 'token_type': 'bearer'}
 
 
