@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, Integer, String, Boolean, Numeric, Enum, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Numeric, Enum, ForeignKey, Date
 from database import Base
 
 
@@ -12,6 +12,11 @@ class OfferCategory(str, enum.Enum):
 class RoleTypes(str, enum.Enum):
     CLIENT = "client"
     ADMIN = "admin"
+
+
+class TransactionStatusTypes(str, enum.Enum):
+    SUCCESS = "success"
+    FAILED = "failed"
 
 
 class Users(Base):
@@ -38,3 +43,19 @@ class Offers(Base):
     active = Column(Boolean, default=True, nullable=False)
     category = Column(Enum(OfferCategory), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey('users.id'))
+
+
+class Transactions(Base):
+    __tablename__ = 'transactions'
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'),
+                     nullable=False, index=True)
+    offer_id = Column(Integer, ForeignKey('offers.id'), nullable=True)
+    customer_name = Column(String, nullable=False)
+    customer_phone = Column(Integer, index=True)
+    package_name = Column(String, nullable=False)
+    amount = Column(Numeric(10, 2), nullable=False)
+    status = Column(Enum(TransactionStatusTypes),
+                    nullable=False, index=True)
+    created_at = Column(Date, nullable=False)
