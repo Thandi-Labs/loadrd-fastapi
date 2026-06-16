@@ -51,10 +51,9 @@ class Transactions(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id'),
                      nullable=False, index=True)
-    offer_id = Column(Integer, ForeignKey('offers.id'), nullable=True)
+    offer_id = Column(Integer, ForeignKey('offers.id'), nullable=False)
     customer_name = Column(String, nullable=False)
     customer_phone = Column(Integer, index=True)
-    package_name = Column(String, nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
     status = Column(Enum(TransactionStatusTypes),
                     nullable=False, index=True)
