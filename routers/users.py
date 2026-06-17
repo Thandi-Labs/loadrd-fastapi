@@ -140,7 +140,8 @@ async def create_user(db: db_dependency, create_user_request: CreateUserRequest,
 
 @router.post("/token", response_model=Token)
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency):
-    user = db.query(Users).filter(Users.username == form_data.username.strip()).first()
+    user = db.query(Users).filter(Users.username ==
+                                  form_data.username.strip()).first()
     authenticated_user = authenticate_user(
         form_data.username, form_data.password,  user)
 

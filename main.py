@@ -1,12 +1,11 @@
-
-from fastapi import FastAPI
+import fastapi
 
 import models
 from database import engine
-from routers import users, offers, admin
+from routers import users, offers, admin, transactions
 
 
-app = FastAPI(title="Loadrd API documentation")
+app = fastapi.FastAPI(title="Loadrd API documentation")
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -18,4 +17,5 @@ def get_health():
 
 app.include_router(users.router)
 app.include_router(offers.router)
+app.include_router(transactions.router)
 app.include_router(admin.router)
