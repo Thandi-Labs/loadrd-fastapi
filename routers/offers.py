@@ -1,15 +1,12 @@
+from typing import Annotated
+
 from fastapi import APIRouter
+from fastapi import Depends, HTTPException, status, Path
 from pydantic import BaseModel, Field
 
 from models import Offers, OfferCategory
 from .db import db_dependency
-
 from .users import get_current_user
-
-from typing import Annotated
-
-from fastapi import Depends, HTTPException, status, Path
-from sqlalchemy.orm import Session
 
 router = APIRouter(
     prefix="/offers",

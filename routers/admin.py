@@ -1,15 +1,9 @@
 from fastapi import APIRouter
-from pydantic import BaseModel, Field
+from fastapi import HTTPException, status, Path
 
-from models import Offers, OfferCategory
+from models import Offers
 from .db import db_dependency
-
-from .users import get_current_user, RoleTypes, user_dependency
-
-from typing import Annotated
-
-from fastapi import Depends, HTTPException, status, Path
-from sqlalchemy.orm import Session
+from .users import RoleTypes, user_dependency
 
 router = APIRouter(
     prefix="/admin",
