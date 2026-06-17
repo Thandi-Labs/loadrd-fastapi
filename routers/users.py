@@ -1,12 +1,11 @@
 from typing import Annotated
-from datetime import timedelta, datetime, timezone
-
+from datetime import timedelta, datetime, timezone, date
 
 from fastapi import APIRouter, status, HTTPException, Path, Depends
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from pydantic import BaseModel
 
-from models import RoleTypes, Users
+from models import RoleTypes, Users, UserAccount
 from .db import db_dependency
 
 from passlib.context import CryptContext
@@ -113,6 +112,17 @@ async def create_user(db: db_dependency, create_user_request: CreateUserRequest)
     )
 
     db.add(user_model)
+    db.commit()
+
+    db.refresh(user_model)
+
+    user_account = UserAccount(
+        user_id=user_model.id,
+        balance=0,
+        modified_at=date.today(),
+    )
+
+    db.add(user_account)
     db.commit()
 
 
