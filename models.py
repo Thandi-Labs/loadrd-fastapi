@@ -1,6 +1,8 @@
 import enum
+from datetime import date
 from sqlalchemy import Column, Integer, String, Boolean, Numeric, Enum, ForeignKey, Date
 from database import Base
+from sqlalchemy.orm import relationship
 
 
 class OfferCategory(str, enum.Enum):
@@ -32,6 +34,9 @@ class Users(Base):
     is_subscribed = Column(Boolean, default=True)
     role = Column(Enum(RoleTypes), nullable=False, index=True)
 
+    account = relationship("UserAccount", back_populates="user",
+                           uselist=False, cascade="all, delete-orphan")
+
 
 class Offers(Base):
     __tablename__ = 'offers'
@@ -58,3 +63,15 @@ class Transactions(Base):
     status = Column(Enum(TransactionStatusTypes),
                     nullable=False, index=True)
     created_at = Column(Date, nullable=False)
+
+
+class UserAccount(Base):
+    __tablename__ = 'user_accounts'
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'),
+                     nullable=False, unique=True, index=True)
+    balance = Column(Integer, default=0)
+    modified_at = Column(Date, nullable=False, default=date.today)
+
+    user = relationship("Users", back_populates="account", uselist=False)

@@ -35,6 +35,14 @@ async def get_transactions(user: user_dependency, db: db_dependency):
     return db.query(Transactions).filter(Transactions.user_id == user.get('id')).all()
 
 
+@router.get("/today", status_code=status.HTTP_200_OK)
+async def get_transactions(user: user_dependency, db: db_dependency):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication failed")
+    return db.query(Transactions).filter(Transactions.user_id == user.get('id')).all()
+
+
 @router.post("/create-transaction", status_code=status.HTTP_201_CREATED)
 async def create_transaction(user: user_dependency, db: db_dependency, transaction: CreateTransactionRequest):
     if user is None:

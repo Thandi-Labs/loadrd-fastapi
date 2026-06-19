@@ -85,6 +85,24 @@ async def update_todo(user: user_dependency, db: db_dependency, offer_id: int,
     db.commit()
 
 
+@router.put('/deactivate/{offer_id}', status_code=status.HTTP_204_NO_CONTENT)
+async def deactivate_offer(user: user_dependency, db: db_dependency, offer_id: int = Path(gt=0)):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication failed")
+
+    offer_model = db.query(Offers).filter(Offers.id == offer_id).filter(
+        Offers.user_id == user.get('id')).first()
+
+    if offer_model is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail='Offer not found')
+
+    offer_model.active = not offer_model.active
+    db.add(offer_model)
+    db.commit()
+
+
 @router.delete('/delete/{offer_id}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_offer(user: user_dependency, db: db_dependency, offer_id: int = Path(gt=0)):
     if user is None:
