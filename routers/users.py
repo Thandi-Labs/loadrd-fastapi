@@ -5,7 +5,7 @@ from fastapi import APIRouter, status, HTTPException, Path, Depends
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from pydantic import BaseModel
 
-from models import RoleTypes, Users, UserAccount
+from models import RoleTypes, Users, UserAccount, Offers, OfferCategory
 from .db import db_dependency
 
 from passlib.context import CryptContext
@@ -25,6 +25,19 @@ router = APIRouter(
 
 bcrypt_content = CryptContext(schemes=['bcrypt'], deprecated='auto')
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
+
+# Offers every new user gets by default
+DEFAULT_OFFERS = [
+    {'offer_name': '1.5 GB - 3 Hrs', 'ussd': '*180*5*2*LD*1*1#', 'amount': 50},
+    {'offer_name': '350 MBS - 7 Days', 'ussd': '*180*5*2*LD*2*1#', 'amount': 49},
+    {'offer_name': '2.5GB - 7 Days', 'ussd': '*180*5*2*LD*3*1#', 'amount': 300},
+    {'offer_name': '6GB - 7 Days', 'ussd': '*180*5*2*LD*4*1#', 'amount': 700},
+    {'offer_name': '1GB - 1Hr', 'ussd': '*180*5*2*LD*5*1#', 'amount': 19},
+    {'offer_name': '250MBS - 24 Hrs', 'ussd': '*180*5*2*LD*6*1#', 'amount': 20},
+    {'offer_name': '1GB - 24 Hrs', 'ussd': '*180*5*2*LD*7*1#', 'amount': 99},
+    {'offer_name': '1.25GB - Until Midnight',
+        'ussd': '*180*5*2*LD*8*1#', 'amount': 55},
+]
 
 
 class CreateUserRequest(BaseModel):
@@ -123,6 +136,15 @@ async def create_user(db: db_dependency, create_user_request: CreateUserRequest)
     )
 
     db.add(user_account)
+
+    for default_offer in DEFAULT_OFFERS:
+        db.add(Offers(
+            **default_offer,
+            active=True,
+            category=OfferCategory.DATA,
+            user_id=user_model.id,
+        ))
+
     db.commit()
 
 
