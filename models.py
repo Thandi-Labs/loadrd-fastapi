@@ -1,6 +1,6 @@
 import enum
-from datetime import date
-from sqlalchemy import Column, Integer, String, Boolean, Numeric, Enum, ForeignKey, Date
+from datetime import date, datetime
+from sqlalchemy import Column, Integer, String, Boolean, Numeric, Enum, ForeignKey, Date, DateTime
 from database import Base
 from sqlalchemy.orm import relationship
 
@@ -63,6 +63,31 @@ class Transactions(Base):
     status = Column(Enum(TransactionStatusTypes),
                     nullable=False, index=True)
     created_at = Column(Date, nullable=False)
+
+
+class Subscriptions(Base):
+    __tablename__ = 'subscriptions'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(String(255), nullable=False)
+    request_count = Column(Integer, nullable=False)
+    price = Column(Numeric(10, 2), nullable=False)
+    duration_days = Column(Integer, nullable=False, default=30)
+    active = Column(Boolean, default=True, nullable=False)
+
+
+class UserSubscriptions(Base):
+    __tablename__ = 'user_subscriptions'
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'),
+                     nullable=False, index=True)
+    subscription_id = Column(Integer, ForeignKey(
+        'subscriptions.id'), nullable=False)
+    requests_remaining = Column(Integer, nullable=False)
+    start_date = Column(DateTime, nullable=False, default=datetime.now)
+    expiry_date = Column(DateTime, nullable=False, index=True)
 
 
 class UserAccount(Base):

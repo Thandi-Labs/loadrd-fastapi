@@ -2,7 +2,7 @@ import fastapi
 
 import models
 from database import engine
-from routers import users, offers, admin, transactions, home
+from routers import users, offers, admin, transactions, home, subscriptions
 
 
 app = fastapi.FastAPI(title="Loadrd API documentation")
@@ -19,4 +19,5 @@ app.include_router(users.router)
 app.include_router(offers.router)
 app.include_router(transactions.router)
 app.include_router(home.router)
+app.include_router(subscriptions.router)
 app.include_router(admin.router)
