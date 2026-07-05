@@ -46,6 +46,34 @@ async def get_my_subscription(user: user_dependency, db: db_dependency):
     return user_subscription
 
 
+@router.put('/consume-token', status_code=status.HTTP_200_OK)
+async def consume_token(user: user_dependency, db: db_dependency):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication failed")
+
+    user_subscription = db.query(UserSubscriptions).filter(
+        UserSubscriptions.user_id == user.get('id')).filter(
+        UserSubscriptions.expiry_date >= datetime.now()).first()
+
+    if user_subscription is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='No active subscription found')
+
+    if user_subscription.requests_remaining <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='No tokens remaining on your subscription')
+
+    user_subscription.requests_remaining -= 1
+
+    db.add(user_subscription)
+    db.commit()
+
+    return {'requests_remaining': user_subscription.requests_remaining}
+
+
 @router.get('/{subscription_id}', status_code=status.HTTP_200_OK)
 async def get_subscription_by_id(db: db_dependency, subscription_id: int = Path(gt=0)):
     subscription = db.query(Subscriptions).filter(
