@@ -115,7 +115,7 @@ user_dependency = Annotated[dict, Depends(get_current_user)]
 async def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     user_model = Users(
         email=create_user_request.email,
-        first_name=create_user_request.email,
+        first_name=create_user_request.first_name,
         username=create_user_request.username,
         last_name=create_user_request.last_name,
         hashed_password=bcrypt_content.hash(create_user_request.password),
